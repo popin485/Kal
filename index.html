@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="theme-color" content="#6c5ce7" />
+<title>Kal — мессенджер</title>
+<link rel="manifest" href='data:application/manifest+json,{"name":"Kal","short_name":"Kal","description":"Мессенджер Kal","start_url":"/","display":"standalone","background_color":"%230e0e11","theme_color":"%236c5ce7","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/5968/5968841.png","sizes":"512x512","type":"image/png"}]}'>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="registerScreen" class="auth-screen hidden">
+  <div class="auth-card">
+    <div class="logo-big">K</div>
+    <h1>Регистрация</h1>
+    <p class="subtitle">Создай свой аккаунт</p>
+    <input type="text" id="regName" placeholder="Ваше имя" maxlength="20" />
+    <input type="text" id="regUsername" placeholder="username (латиницей)" maxlength="15" />
+    <input type="email" id="regEmail" placeholder="Email (почта)" />
+    <input type="password" id="regPassword" placeholder="Пароль" />
+    <div class="err" id="regErr"></div>
+    <button id="registerBtn" class="btn-primary">Зарегистрироваться</button>
+    <button id="goToLogin" class="btn-secondary">Уже есть аккаунт? Войти</button>
+  </div>
+</div>
+
+<div id="loginScreen" class="auth-screen hidden">
+  <div class="auth-card">
+    <div class="logo-big">K</div>
+    <h1>Вход</h1>
+    <p class="subtitle">Войди в свой аккаунт</p>
+    <input type="email" id="logEmail" placeholder="Email (почта)" />
+    <input type="password" id="logPassword" placeholder="Пароль" />
+    <div class="err" id="logErr"></div>
+    <button id="loginBtn" class="btn-primary">Войти</button>
+    <button id="goToRegister" class="btn-secondary">Нет аккаунта? Зарегистрироваться</button>
+  </div>
+</div>
+
+<div id="app" class="app hidden">
+  <div class="main-content">
+    <div id="chatsTab" class="tab-content">
+      <aside class="chats-tab">
+        <div class="chats-tab-header">
+          <div class="logo">K</div>
+          <div style="flex:1">
+            <span class="app-name">Kal</span>
+            <span class="user-tag" id="myTag"></span>
+          </div>
+        </div>
+        <div class="search-box">
+          <input type="text" id="searchInput" placeholder="Найти @username..." />
+        </div>
+        <div class="search-results hidden" id="searchResults"></div>
+        <div class="chats-label">Чаты</div>
+        <div class="chats-list" id="chatsList"></div>
+      </aside>
+
+      <main class="chat-area" id="chatArea">
+        <div id="emptyState" class="empty-state">
+          <div class="empty-logo">K</div>
+          <h2>Добро пожаловать в Kal</h2>
+          <p>Найдите человека по @username в поиске</p>
+        </div>
+        <div id="chatView" class="chat-view hidden">
+          <header class="chat-header" id="chatHeader">
+            <div class="avatar" id="chatAvatar">?</div>
+            <div class="chat-info">
+              <h3 id="chatName">Чат</h3>
+              <span id="chatUsername"></span>
+            </div>
+          </header>
+          <div class="messages" id="messages"></div>
+          <footer class="composer">
+            <input type="text" id="messageInput" placeholder="Написать сообщение..." autocomplete="off" />
+            <button id="sendBtn" class="btn-send">➤</button>
+          </footer>
+        </div>
+      </main>
+    </div>
+
+    <div id="profileTab" class="tab-content hidden">
+      <div class="profile-tab">
+        <div class="profile-avatar-wrap" id="avatarClickArea">
+          <img id="myAvatarImg" class="profile-avatar hidden" />
+          <div id="myAvatarPlaceholder" class="profile-avatar-placeholder">👤</div>
+          <div class="profile-avatar-edit">📷</div>
+        </div>
+        <input type="file" id="avatarInput" accept="image/*" class="hidden" />
+        
+        <div class="profile-form">
+          <div class="profile-input-group">
+            <label>Имя</label>
+            <input type="text" id="profileName" placeholder="Ваше имя" maxlength="20" />
+          </div>
+          <div class="profile-input-group">
+            <label>Username</label>
+            <input type="text" id="profileUsername" placeholder="username" maxlength="15" />
+          </div>
+          <div class="profile-actions">
+            <button id="saveProfileBtn" class="btn-primary">Сохранить</button>
+          </div>
+          <div class="profile-actions" style="margin-top: 10px;">
+             <button id="logoutBtn" class="btn-danger">Выйти из аккаунта</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-nav" id="bottomNav">
+    <div class="nav-item active" id="navChats">
+      <span class="icon">💬</span>
+      <span>Чаты</span>
+    </div>
+    <div class="nav-item" id="navProfile">
+      <span class="icon">👤</span>
+      <span>Профиль</span>
+    </div>
+    <a href="https://netlify.com" target="_blank" class="netlify-badge">
+      <span>⚡</span> Netlify
+    </a>
+  </div>
+</div>
+
+<div id="notificationContainer"></div>
+<script type="module" src="script.js"></script>
+</body>
+  </html>
