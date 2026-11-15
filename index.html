@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="theme-color" content="#6c5ce7" />
+<title>Kal — мессенджер</title>
+<link rel="manifest" href='data:application/manifest+json,{"name":"Kal","short_name":"Kal","description":"Мессенджер Kal","start_url":"/","display":"standalone","background_color":"%230e0e11","theme_color":"%236c5ce7","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/5968/5968841.png","sizes":"512x512","type":"image/png"}]}'>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+:root {
+  --bg: #0e0e11; --panel: #17171c; --panel-2: #1e1e26;
+  --accent: #6c5ce7; --accent-hover: #8172ff;
+  --text: #f0f0f5; --text-dim: #8a8a99; --border: #26262f;
+  --msg-own: #6c5ce7; --msg-other: #23232d;
+}
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; }
+.hidden { display: none !important; }
+
+.auth-screen { height: 100vh; display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(circle at 50% 30%, #1d1b33, #0e0e11 70%); padding: 20px; }
+.auth-card { background: var(--panel); padding: 30px 24px; border-radius: 24px;
+  width: 100%; max-width: 380px; text-align: center; border: 1px solid var(--border);
+  box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+.logo-big { width: 72px; height: 72px; margin: 0 auto 16px;
+  background: linear-gradient(135deg, var(--accent), #a29bfe); border-radius: 20px;
+  display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: 800; }
+.auth-card h1 { font-size: 28px; margin-bottom: 6px; }
+.subtitle { color: var(--text-dim); font-size: 14px; margin-bottom: 20px; }
+.auth-card input { width: 100%; padding: 14px 16px; background: var(--panel-2);
+  border: 1px solid var(--border); border-radius: 12px; color: var(--text);
+  font-size: 16px; margin-bottom: 12px; outline: none; }
+.auth-card input:focus { border-color: var(--accent); }
+.input-hint { font-size: 12px; color: var(--text-dim); text-align: left; margin: -6px 0 12px 4px; }
+.btn-primary { width: 100%; padding: 14px; background: var(--accent); color: #fff;
+  border: none; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; transition: .2s; }
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+.err { color: #ff6b6b; font-size: 13px; margin-bottom: 12px; min-height: 16px; }
+
+.app { display: flex; height: 100vh; }
+.sidebar { width: 320px; background: var(--panel); border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; flex-shrink: 0; }
+.sidebar-header { display: flex; align-items: center; gap: 10px; padding: 16px;
+  border-bottom: 1px solid var(--border); }
+.logo { width: 34px; height: 34px; background: linear-gradient(135deg, var(--accent), #a29bfe);
+  border-radius: 10px; display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 18px; }
+.app-name { font-weight: 700; font-size: 18px; flex: 1; }
+.user-tag { font-size: 12px; color: var(--text-dim); display: block; }
+.icon-btn { background: transparent; border: none; color: var(--text-dim);
+  font-size: 18px; cursor: pointer; padding: 6px; border-radius: 8px; }
+.icon-btn:hover { background: var(--panel-2); color: var(--text); }
+.search-box { padding: 12px 16px 6px; }
+.search-box input { width: 100%; padding: 10px 14px; background: var(--panel-2);
+  border: 1px solid var(--border); border-radius: 10px; color: var(--text);
+  outline: none; font-size: 14px; }
+.search-box input:focus { border-color: var(--accent); }
+.search-results { padding: 0 8px 8px; max-height: 240px; overflow-y: auto; }
+.search-results .result-item { display: flex; align-items: center; gap: 10px;
+  padding: 10px; border-radius: 10px; cursor: pointer; margin-bottom: 2px; }
+.search-results .result-item:hover { background: var(--panel-2); }
+.search-results .avatar { width: 36px; height: 36px; border-radius: 50%;
+  background: linear-gradient(135deg, #6c5ce7, #a29bfe); display: flex;
+  align-items: center; justify-content: center; font-weight: 700; font-size: 14px; }
+.search-results .result-meta { flex: 1; min-width: 0; }
+.search-results .result-meta h4 { font-size: 14px; }
+.search-results .result-meta span { font-size: 12px; color: var(--text-dim); }
+.no-result { text-align: center; color: var(--text-dim); font-size: 13px; padding: 12px; }
+.chats-label { padding: 12px 16px 4px; font-size: 11px; text-transform: uppercase;
+  letter-spacing: 1px; color: var(--text-dim); font-weight: 600; }
+.chats-list { flex: 1; overflow-y: auto; padding: 4px 8px; }
+.chat-item { display: flex; align-items: center; gap: 12px; padding: 12px;
+  border-radius: 12px; cursor: pointer; transition: .15s; margin-bottom: 2px; }
+.chat-item:hover, .chat-item.active { background: var(--panel-2); }
+.chat-item .avatar { width: 44px; height: 44px; border-radius: 50%;
+  background: linear-gradient(135deg, #6c5ce7, #a29bfe); display: flex;
+  align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; }
+.chat-item .chat-meta { flex: 1; min-width: 0; }
+.chat-item .chat-meta h4 { font-size: 15px; margin-bottom: 3px; }
+.chat-item .chat-meta p { font-size: 13px; color: var(--text-dim);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.chat-area { flex: 1; display: flex; flex-direction: column; background: var(--bg); min-width: 0; }
+.empty-state { flex: 1; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; color: var(--text-dim); padding: 20px; text-align: center; }
+.empty-logo { width: 80px; height: 80px; background: linear-gradient(135deg, var(--accent), #a29bfe);
+  border-radius: 24px; display: flex; align-items: center; justify-content: center;
+  font-size: 40px; font-weight: 800; color: #fff; margin-bottom: 20px; }
+.empty-state h2 { color: var(--text); margin-bottom: 8px; }
+.chat-view { flex: 1; display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.chat-header { display: flex; align-items: center; gap: 12px;
+  padding: 12px 20px; border-bottom: 1px solid var(--border);
+  background: var(--panel); flex-shrink: 0; }
+.chat-header .avatar { width: 42px; height: 42px; border-radius: 50%;
+  background: linear-gradient(135deg, #6c5ce7, #a29bfe); display: flex;
+  align-items: center; justify-content: center; font-weight: 700; }
+.chat-info { flex: 1; min-width: 0; }
+.chat-info h3 { font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chat-info span { font-size: 13px; color: var(--text-dim); }
+.messages { flex: 1; overflow-y: auto; padding: 20px;
+  display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+.message { max-width: 75%; padding: 10px 14px; border-radius: 16px;
+  font-size: 15px; line-height: 1.4; word-wrap: break-word; animation: pop .2s ease; }
+@keyframes pop { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.message.own { align-self: flex-end; background: var(--msg-own); border-bottom-right-radius: 4px; }
+.message.other { align-self: flex-start; background: var(--msg-other); border-bottom-left-radius: 4px; }
+.message .time { font-size: 11px; opacity: .7; margin-top: 4px; display: block; text-align: right; }
+.composer { display: flex; gap: 10px; padding: 14px 20px;
+  border-top: 1px solid var(--border); background: var(--panel); flex-shrink: 0; }
+.composer input { flex: 1; padding: 12px 16px; background: var(--panel-2);
+  border: 1px solid var(--border); border-radius: 12px; color: var(--text);
+  outline: none; font-size: 16px; min-width: 0; }
+.composer input:focus { border-color: var(--accent); }
+.btn-send { width: 46px; height: 46px; border-radius: 12px; border: none;
+  background: var(--accent); color: #fff; font-size: 18px; cursor: pointer;
+  transition: .2s; flex-shrink: 0; }
+.btn-send:hover { background: var(--accent-hover); }
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-thumb { background: #2a2a35; border-radius: 3px; }
+
+@media (max-width: 700px) {
+  .sidebar { width: 100%; }
+  .chat-area { display: none; }
+  .app.chat-open .sidebar { display: none; }
+  .app.chat-open .chat-area { display: flex; }
+  .chat-header::before { content: "‹"; font-size: 28px; color: var(--accent);
+    cursor: pointer; margin-right: 6px; line-height: 1; }
+}
+</style>
+</head>
+<body>
+
+<div id="authScreen" class="auth-screen hidden">
+  <div class="auth-card">
+    <div class="logo-big">K</div>
+    <h1>Kal</h1>
+    <p class="subtitle">Создай свой профиль</p>
+    <input type="text" id="nameInput" placeholder="Ваше имя" maxlength="20" />
+    <input type="text" id="usernameInput" placeholder="username (латиницей)" maxlength="15" />
+    <p class="input-hint">Только латиница, цифры и _. Например: <b>ivan_95</b></p>
+    <div class="err" id="errMsg"></div>
+    <button id="loginBtn" class="btn-primary">Создать аккаунт</button>
+  </div>
+</div>
+
+<div id="app" class="app hidden">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">K</div>
+      <div style="flex:1">
+        <span class="app-name">Kal</span>
+        <span class="user-tag" id="myTag"></span>
+      </div>
+      <button id="logoutBtn" class="icon-btn" title="Выйти">⎋</button>
+    </div>
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="Найти @username..." />
+    </div>
+    <div class="search-results hidden" id="searchResults"></div>
+    <div class="chats-label">Чаты</div>
+    <div class="chats-list" id="chatsList"></div>
+  </aside>
+
+  <main class="chat-area" id="chatArea">
+    <div id="emptyState" class="empty-state">
+      <div class="empty-logo">K</div>
+      <h2>Добро пожаловать в Kal</h2>
+      <p>Найдите человека по @username в поиске</p>
+    </div>
+    <div id="chatView" class="chat-view hidden">
+      <header class="chat-header">
+        <div class="avatar" id="chatAvatar">?</div>
+        <div class="chat-info">
+          <h3 id="chatName">Чат</h3>
+          <span id="chatUsername"></span>
+        </div>
+      </header>
+      <div class="messages" id="messages"></div>
+      <footer class="composer">
+        <input type="text" id="messageInput" placeholder="Написать сообщение..." autocomplete="off" />
+        <button id="sendBtn" class="btn-send">➤</button>
+      </footer>
+    </div>
+  </main>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, signInAnonymously, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, collection, doc, setDoc, getDoc, getDocs, query, where, addDoc, orderBy, onSnapshot, serverTimestamp, limit } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDPyoYEsvZTvSSaVUb7pKDyAJzpZLxE3fk",
+  authDomain: "kal-is.firebaseapp.com",
+  projectId: "kal-is",
+  storageBucket: "kal-is.firebasestorage.app",
+  messagingSenderId: "267978238420",
+  appId: "1:267978238420:web:09f37b1e3a50e3398cce41",
+  measurementId: "G-SDY8CJM1CC"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const $ = (id) => document.getElementById(id);
+const isValidUsername = (u) => /^[a-zA-Z0-9_]{3,15}$/.test(u);
+const escapeHtml = (str) => String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
+const chatIdFor = (a, b) => [a, b].sort().join('__');
+
+const state = { uid: null, me: null, contacts: {}, activeUser: null, unsubMessages: null };
+
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    const snap = await getDoc(doc(db, 'users', user.uid));
+    if (snap.exists()) {
+      const d = snap.data();
+      state.uid = user.uid;
+      state.me = { uid: user.uid, name: d.name, username: d.username };
+      enterApp();
+      return;
+    }
+  }
+  $('authScreen').classList.remove('hidden');
+  initAuthLogic();
+});
+
+function initAuthLogic() {
+  $('loginBtn').onclick = async () => {
+    const name = $('nameInput').value.trim();
+    const username = $('usernameInput').value.trim().toLowerCase();
+    const err = $('errMsg');
+    err.textContent = '';
+    
+    if (!name) { err.textContent = 'Введите имя'; return; }
+    if (!isValidUsername(username)) { err.textContent = 'Username: 3–15 символов, латиница, цифры, _'; return; }
+
+    $('loginBtn').disabled = true;
+    $('loginBtn').textContent = 'Подключение...';
+
+    try {
+      const cred = await signInAnonymously(auth);
+      const uid = cred.user.uid;
+      const unameRef = doc(db, 'usernames', username);
+      const unameSnap = await getDoc(unameRef);
+      
+      if (unameSnap.exists()) {
+        err.textContent = 'Этот username уже занят. Выбери другой.';
+        await signOut(auth);
+        return;
+      }
+
+      await setDoc(doc(db, 'users', uid), { uid, name, username, createdAt: serverTimestamp() });
+      await setDoc(unameRef, { uid });
+
+      state.uid = uid;
+      state.me = { uid, name, username };
+      enterApp();
+    } catch (e) {
+      console.error(e);
+      err.textContent = 'Ошибка: ' + (e.message || 'попробуй ещё раз');
+    } finally {
+      $('loginBtn').disabled = false;
+      $('loginBtn').textContent = 'Создать аккаунт';
+    }
+  };
+
+  $('usernameInput').addEventListener('input', (e) => {
+    e.target.value = e.target.value.replace(/[^a-zA-Z0-9_]/g, '').toLowerCase();
+  });
+}
+
+function enterApp() {
+  $('authScreen').classList.add('hidden');
+  $('app').classList.remove('hidden');
+  $('myTag').textContent = '@' + state.me.username;
+  bindSearch();
+  bindComposer();
+  renderChats();
+}
+
+async function doLogout() {
+  if (state.unsubMessages) state.unsubMessages();
+  await signOut(auth);
+  location.reload();
+}
+
+async function searchUsers(q) {
+  const clean = q.trim().toLowerCase().replace(/^@/, '');
+  if (!clean) return [];
+  const usersRef = collection(db, 'users');
+  const q1 = query(usersRef, where('username', '>=', clean), where('username', '<=', clean + '\uf8ff'), limit(10));
+  const snap = await getDocs(q1);
+  const results = [];
+  snap.forEach(d => {
+    const u = d.data();
+    if (u.username !== state.me.username) results.push(u);
+  });
+  return results;
+}
+
+function bindSearch() {
+  const input = $('searchInput');
+  const box = $('searchResults');
+  input.oninput = async () => {
+    const q = input.value;
+    if (!q.trim()) { box.classList.add('hidden'); box.innerHTML = ''; return; }
+    box.classList.remove('hidden');
+    box.innerHTML = '<p class="no-result">Поиск...</p>';
+    try {
+      const results = await searchUsers(q);
+      if (results.length === 0) {
+        box.innerHTML = '<p class="no-result">Никого не найдено 😕</p>'; return;
+      }
+      box.innerHTML = '';
+      results.forEach(u => {
+        const el = document.createElement('div');
+        el.className = 'result-item';
+        el.innerHTML = `<div class="avatar">${u.name.charAt(0).toUpperCase()}</div><div class="result-meta"><h4>${escapeHtml(u.name)}</h4><span>@${escapeHtml(u.username)}</span></div>`;
+        el.onclick = () => startChat(u);
+        box.appendChild(el);
+      });
+    } catch (e) {
+      box.innerHTML = '<p class="no-result">Ошибка поиска</p>';
+    }
+  };
+}
+
+async function startChat(user) {
+  state.contacts[user.username] = user;
+  state.activeUser = user.username;
+  $('searchInput').value = '';
+  $('searchResults').classList.add('hidden');
+  await openChat(user.username);
+  renderChats();
+}
+
+async function openChat(otherUsername) {
+  const other = state.contacts[otherUsername];
+  if (!other) return;
+  state.activeUser = otherUsername;
+  $('emptyState').classList.add('hidden');
+  $('chatView').classList.remove('hidden');
+  $('app').classList.add('chat-open');
+  $('chatAvatar').textContent = other.name.charAt(0).toUpperCase();
+  $('chatName').textContent = other.name;
+  $('chatUsername').textContent = '@' + other.username;
+  await loadMessages(other.uid);
+  renderChats();
+  setTimeout(() => $('messageInput').focus(), 100);
+}
+
+async function loadMessages(otherUid) {
+  if (state.unsubMessages) state.unsubMessages();
+  const chatId = chatIdFor(state.uid, otherUid);
+  const msgRef = collection(db, 'chats', chatId, 'messages');
+  const q = query(msgRef, orderBy('createdAt', 'asc'));
+
+  state.unsubMessages = onSnapshot(q, (snap) => {
+    const box = $('messages');
+    box.innerHTML = '';
+    if (snap.empty) {
+      box.innerHTML = '<p style="text-align:center;color:#8a8a99;margin-top:20px">Начните диалог 👋</p>';
+      return;
+    }
+    snap.forEach(d => {
+      const m = d.data();
+      const el = document.createElement('div');
+      el.className = 'message ' + (m.from === state.uid ? 'own' : 'other');
+      const time = m.createdAt?.toDate?.()?.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) || '...';
+      el.innerHTML = `${escapeHtml(m.text)}<span class="time">${time}</span>`;
+      box.appendChild(el);
+    });
+    box.scrollTop = box.scrollHeight;
+  });
+}
+
+async function sendMessage() {
+  const input = $('messageInput');
+  const text = input.value.trim();
+  if (!text || !state.activeUser) return;
+  const other = state.contacts[state.activeUser];
+  if (!other) return;
+  input.value = '';
+  const chatId = chatIdFor(state.uid, other.uid);
+  try {
+    await addDoc(collection(db, 'chats', chatId, 'messages'), { text, from: state.uid, createdAt: serverTimestamp() });
+    await setDoc(doc(db, 'chats', chatId), {
+      users: [state.uid, other.uid], lastText: text, lastTs: serverTimestamp(),
+      [`name_${state.uid}`]: state.me.name, [`name_${other.uid}`]: other.name,
+      [`uname_${state.uid}`]: state.me.username, [`uname_${other.uid}`]: other.username,
+    }, { merge: true });
+  } catch (e) { alert('Ошибка: ' + e.message); }
+  renderChats();
+}
+
+function bindComposer() {
+  $('sendBtn').onclick = sendMessage;
+  $('messageInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') sendMessage(); });
+}
+
+function renderChats() {
+  const list = $('chatsList');
+  list.innerHTML = '';
+  const contacts = Object.values(state.contacts);
+  if (contacts.length === 0) {
+    list.innerHTML = '<p style="text-align:center;color:#8a8a99;padding:20px;font-size:14px">Найдите собеседника через поиск ↑</p>';
+    return;
+  }
+  contacts.forEach(user => {
+    const item = document.createElement('div');
+    item.className = 'chat-item' + (user.username === state.activeUser ? ' active' : '');
+    item.innerHTML = `<div class="avatar">${user.name.charAt(0).toUpperCase()}</div><div class="chat-meta"><h4>${escapeHtml(user.name)}</h4><p>@${escapeHtml(user.username)}</p></div>`;
+    item.onclick = () => openChat(user.username);
+    list.appendChild(item);
+  });
+}
+
+$('logoutBtn').onclick = doLogout;
+
+document.querySelector('.chat-header').addEventListener('click', e => {
+  if (window.innerWidth <= 700 && e.target.tagName === 'HEADER') {
+    if (state.unsubMessages) state.unsubMessages();
+    $('app').classList.remove('chat-open');
+    state.activeUser = null;
+    $('chatView').classList.add('hidden');
+    $('emptyState').classList.remove('hidden');
+  }
+});
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('.search-box') && !e.target.closest('.search-results')) {
+    $('searchResults').classList.add('hidden');
+  }
+});
+</script>
+</body>
+  </html>
